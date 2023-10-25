@@ -1,0 +1,131 @@
+<html>
+<head>
+    <title>Online Browser</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        display: flex;
+        justify-content: center; 
+        align-items: center; 
+    }
+    a, p {
+    display: inline;
+    margin-right: 10px; 
+}
+#footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    color: #000000;
+}
+</style>
+<div>
+<body>
+    <h1 style="text-align: center;">FireFox VNC</h1>
+    <p style="text-align: center;">It runs an online browser for 90 seconds. You can check cdn. You can provide proxy control.</p>
+    <p style="text-align: center;">Maximum 3 containers can work</p>
+ 
+    <br>
+    <br>
+    <br>
+    <form id="startContainerForm" action="/start_container" method="POST">
+        <button id="toggleButton" type="submit">Start Firefox</button>
+    </form>
+
+    <canvas id="containerChart" width="600" height="300"></canvas>
+    <div id="container">
+        {% if url %}
+        <a href="{{ url }}" target="_blank">Go To Firefox</a> <p>Password: {{ password }}</p>
+        {% endif %}
+    </div>
+   
+</body>
+</div>
+<div id="footer">
+    
+    Thank you Jocelyn Le Sage. Powered by Docker+Redis+Flask. Idea er-el-bi
+</div>
+</html>
+
+<script>
+    const containerData = {
+    labels: [],
+    datasets: [
+        {
+            label: 'Ops Containers',
+            data: [],
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+        },
+    ],
+};
+
+
+const ctx = document.getElementById('containerChart').getContext('2d');
+
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: containerData,
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                suggestedMin: 0,  
+                suggestedMax: 5,  
+                
+            },
+        },
+    },
+});
+
+    const container = document.getElementById('container');
+    const startContainerForm = document.getElementById('startContainerForm');
+    const toggleButton = document.getElementById('toggleButton');
+
+function updateContainerCount() {
+    fetch('/get_container')
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Data Error.');
+            }
+        })
+        .then(data => {
+            console.log(data)
+            containerData.labels.push(new Date().toLocaleTimeString());
+            containerData.datasets[0].data.push(data);
+
+            if (data >= 3) {
+            toggleButton.style.display = 'none';
+        } else {
+            toggleButton.style.display = 'block'; 
+        }
+    
+            
+            chart.update();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+
+
+
+setInterval(updateContainerCount, 1000);
+
+
+updateContainerCount();
+</script>
+
